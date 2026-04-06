@@ -13,6 +13,7 @@ using TMPro;
 ///   Tools ▶ Scene Setup ▶ Step 3 – Add Components to Glasses and Bottles
 ///   Tools ▶ Scene Setup ▶ Step 4 – Create Serving Zone
 ///   Tools ▶ Scene Setup ▶ Step 5 – Create and Assign Recipes
+///   Tools ▶ Scene Setup ▶ Step 6 – Add Bottle Labels
 ///   ── or ──
 ///   Tools ▶ Scene Setup ▶ Run All Steps
 ///
@@ -50,6 +51,7 @@ public static class SceneBootstrapper
         AddComponentsToGlassesAndBottles();
         CreateServingZone();
         CreateAndAssignRecipes();
+        AddBottleLabels();
         Debug.Log("[SceneBootstrapper] ✅ All steps done.");
     }
 
@@ -320,6 +322,77 @@ public static class SceneBootstrapper
             Debug.LogWarning("[SceneBootstrapper] RecipeManager not found in scene — " +
                              "run Step 1 first, then re-run Step 5 to assign recipes.");
         }
+    }
+
+    // ── Step 6 ────────────────────────────────────────────────────────────────
+    [MenuItem("Tools/Scene Setup/Step 6 - Add Bottle Labels")]
+    public static void AddBottleLabels()
+    {
+        // Create the shared Tooltip object if it doesn't exist
+        var tooltipGO = GameObject.Find("Tooltip");
+        if (tooltipGO == null)
+        {
+            tooltipGO = new GameObject("Tooltip");
+            Undo.RegisterCreatedObjectUndo(tooltipGO, "Create Tooltip");
+
+            // World-space canvas
+            var canvas = tooltipGO.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            tooltipGO.AddComponent<CanvasScaler>();
+
+            var rt = tooltipGO.GetComponent<RectTransform>();
+            rt.sizeDelta  = new Vector2(200, 50);
+            rt.localScale = Vector3.one * 0.002f;
+
+            // TextMeshPro label
+            var textGO = new GameObject("Label");
+            textGO.transform.SetParent(tooltipGO.transform, false);
+            var tmp = textGO.AddComponent<TextMeshProUGUI>();
+            tmp.fontSize  = 28;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.color     = Color.white;
+            var trt = tmp.rectTransform;
+            trt.anchorMin = Vector2.zero;
+            trt.anchorMax = Vector2.one;
+            trt.offsetMin = trt.offsetMax = Vector2.zero;
+
+            // Tooltip component
+            var tooltip = tooltipGO.AddComponent<Tooltip>();
+            var so = new SerializedObject(tooltip);
+            so.FindProperty("tooltipText").objectReferenceValue = tmp;
+            so.ApplyModifiedProperties();
+
+            tooltipGO.SetActive(false); // hidden by default
+            Debug.Log("[SceneBootstrapper] Created Tooltip object.");
+        }
+
+        // Add HoverInfo to every bottle that has BottleInteractable
+        int count = 0;
+        foreach (var bottle in Object.FindObjectsByType<BottleInteractable>(
+                     FindObjectsSortMode.None))
+        {
+            var hover = bottle.GetComponent<HoverInfo>();
+            if (hover == null)
+            {
+                hover = Undo.AddComponent<HoverInfo>(bottle.gameObject);
+                hover.offset = new Vector3(0, 0.2f, 0);
+            }
+
+            // Set label to formatted ingredient name
+            hover.message = FormatIngredientName(bottle.ingredientType.ToString());
+            EditorUtility.SetDirty(bottle.gameObject);
+            count++;
+        }
+
+        Debug.Log($"[SceneBootstrapper] ✅ Added/updated HoverInfo on {count} bottles.");
+    }
+
+    private static string FormatIngredientName(string raw)
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (char c in raw)
+        { if (char.IsUpper(c) && sb.Length > 0) sb.Append(' '); sb.Append(c); }
+        return sb.ToString();
     }
 
     // ── Step 4 ────────────────────────────────────────────────────────────────
