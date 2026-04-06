@@ -50,11 +50,26 @@ public class RecipeManager : MonoBehaviour
     public void NextRecipe()
     {
         if (recipes.Count == 0) return;
-        _index = shuffle
-            ? Random.Range(0, recipes.Count)
-            : (_index + 1) % recipes.Count;
+
+        if (shuffle)
+        {
+            // Avoid repeating the same recipe twice in a row
+            int next = _index;
+            if (recipes.Count > 1)
+                while (next == _index)
+                    next = Random.Range(0, recipes.Count);
+            _index = next;
+        }
+        else
+        {
+            _index = (_index + 1) % recipes.Count;
+        }
+
         Current = recipes[_index];
         Debug.Log($"[RecipeManager] New recipe: {Current.drinkName}");
+
+        // Keep the canvas in sync with the current recipe
+        FindFirstObjectByType<RecipeDisplay>()?.Refresh();
     }
 
     /// <summary>

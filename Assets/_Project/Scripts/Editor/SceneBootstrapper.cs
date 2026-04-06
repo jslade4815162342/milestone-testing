@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,6 +12,7 @@ using TMPro;
 ///   Tools ▶ Scene Setup ▶ Step 2 – Create Recipe Canvas
 ///   Tools ▶ Scene Setup ▶ Step 3 – Add Components to Glasses and Bottles
 ///   Tools ▶ Scene Setup ▶ Step 4 – Create Serving Zone
+///   Tools ▶ Scene Setup ▶ Step 5 – Create and Assign Recipes
 ///   ── or ──
 ///   Tools ▶ Scene Setup ▶ Run All Steps
 ///
@@ -47,8 +49,8 @@ public static class SceneBootstrapper
         CreateRecipeCanvas();
         AddComponentsToGlassesAndBottles();
         CreateServingZone();
-        Debug.Log("[SceneBootstrapper] ✅ All steps done. " +
-                  "Select GameManager and drag DrinkRecipe assets into RecipeManager → Recipes.");
+        CreateAndAssignRecipes();
+        Debug.Log("[SceneBootstrapper] ✅ All steps done.");
     }
 
     // ── Step 1 ────────────────────────────────────────────────────────────────
@@ -237,6 +239,87 @@ public static class SceneBootstrapper
         Debug.Log($"[SceneBootstrapper] ✅ Done — {glassCount} glasses, {bottleCount} bottles set up.\n" +
                   "⚠  Check each bottle in the Inspector: select it → BottleInteractable → " +
                   "change Ingredient Type if the auto-assigned one is wrong.");
+    }
+
+    // ── Step 5 ────────────────────────────────────────────────────────────────
+    [MenuItem("Tools/Scene Setup/Step 5 - Create and Assign Recipes")]
+    public static void CreateAndAssignRecipes()
+    {
+        const string folder = "Assets/_Project/ScriptableObjects/Recipes";
+
+        // Ensure folder exists
+        if (!AssetDatabase.IsValidFolder("Assets/_Project/ScriptableObjects"))
+            AssetDatabase.CreateFolder("Assets/_Project", "ScriptableObjects");
+        if (!AssetDatabase.IsValidFolder(folder))
+            AssetDatabase.CreateFolder("Assets/_Project/ScriptableObjects", "Recipes");
+
+        // Recipe definitions: (fileName, drinkName, description, Color, ingredients[])
+        var defs = new (string file, string name, string desc, Color color, IngredientType[] ingr)[]
+        {
+            ("VodkaSoda",    "Vodka Soda",    "Light and refreshing.",
+             new Color(0.85f, 0.95f, 1f,   0.7f),
+             new[] { IngredientType.Vodka, IngredientType.SodaWater, IngredientType.Ice }),
+
+            ("VodkaCranberry","Vodka Cranberry","Classic bar favourite.",
+             new Color(0.85f, 0.12f, 0.22f, 0.8f),
+             new[] { IngredientType.Vodka, IngredientType.CranberryJuice, IngredientType.Ice }),
+
+            ("Martini",      "Martini",        "Shaken, not stirred.",
+             new Color(0.92f, 0.96f, 0.78f, 0.8f),
+             new[] { IngredientType.Gin, IngredientType.Vermouth }),
+
+            ("Margarita",    "Margarita",      "Tart and salty.",
+             new Color(0.85f, 0.98f, 0.35f, 0.8f),
+             new[] { IngredientType.Tequila, IngredientType.LimeJuice, IngredientType.TripleSec }),
+        };
+
+        var createdAssets = new List<DrinkRecipe>();
+
+        foreach (var d in defs)
+        {
+            string path = $"{folder}/{d.file}.asset";
+            var existing = AssetDatabase.LoadAssetAtPath<DrinkRecipe>(path);
+            if (existing != null)
+            {
+                Debug.Log($"[SceneBootstrapper] Recipe already exists, skipping: {d.name}");
+                createdAssets.Add(existing);
+                continue;
+            }
+
+            var recipe = ScriptableObject.CreateInstance<DrinkRecipe>();
+            recipe.drinkName           = d.name;
+            recipe.description         = d.desc;
+            recipe.liquidColor         = d.color;
+            recipe.requiredIngredients = new List<IngredientType>(d.ingr);
+
+            AssetDatabase.CreateAsset(recipe, path);
+            createdAssets.Add(recipe);
+            Debug.Log($"[SceneBootstrapper]  Created recipe: {d.name}");
+        }
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+
+        // Auto-assign to RecipeManager in scene
+        var rm = Object.FindFirstObjectByType<RecipeManager>();
+        if (rm != null)
+        {
+            var so = new SerializedObject(rm);
+            var listProp = so.FindProperty("recipes");
+            listProp.ClearArray();
+            for (int i = 0; i < createdAssets.Count; i++)
+            {
+                listProp.InsertArrayElementAtIndex(i);
+                listProp.GetArrayElementAtIndex(i).objectReferenceValue = createdAssets[i];
+            }
+            so.ApplyModifiedProperties();
+            Debug.Log("[SceneBootstrapper] ✅ Recipes created and assigned to RecipeManager.");
+        }
+        else
+        {
+            Debug.LogWarning("[SceneBootstrapper] RecipeManager not found in scene — " +
+                             "run Step 1 first, then re-run Step 5 to assign recipes.");
+        }
     }
 
     // ── Step 4 ────────────────────────────────────────────────────────────────
