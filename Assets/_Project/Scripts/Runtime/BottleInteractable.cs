@@ -77,10 +77,13 @@ public class BottleInteractable : MonoBehaviour
             if (!_poured && _pourTimer >= pourDuration)
             {
                 _glassInRange.AddIngredient(ingredientType);
+<<<<<<< HEAD
                 if (gameObject.CompareTag("Vodka"))
                 {
                     BarAudioManager.Instance?.PlayBottlePickup();
                 }
+=======
+>>>>>>> 4326a873d027be8e6526b89cc4d75f09529d16ed
                 _poured = true;
             }
         }

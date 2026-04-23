@@ -67,5 +67,9 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
+<<<<<<< HEAD
     "dotnet.defaultSolution": "milestone-testing.slnx"
+=======
+    "dotnet.defaultSolution": "milestone-testing5.slnx"
+>>>>>>> 4326a873d027be8e6526b89cc4d75f09529d16ed
 }

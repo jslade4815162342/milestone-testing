@@ -70,6 +70,10 @@ public class DrinkGlass : MonoBehaviour
         if (IsFull) return;
         Ingredients.Add(type);
         UpdateVisual();
+<<<<<<< HEAD
+=======
+        BarAudioManager.Instance?.PlayClink();
+>>>>>>> 4326a873d027be8e6526b89cc4d75f09529d16ed
         GameManager.Instance?.OnGlassUpdated(this);
         Debug.Log($"[DrinkGlass] {type} added ({Ingredients.Count}/{maxIngredients})");
     }

@@ -2,9 +2,14 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!78 &1
 TagManager:
+<<<<<<< HEAD
   serializedVersion: 3
   tags:
   - Vodka
+=======
+  serializedVersion: 2
+  tags: []
+>>>>>>> 4326a873d027be8e6526b89cc4d75f09529d16ed
   layers:
   - Default
   - TransparentFX
@@ -51,3 +56,30 @@ TagManager:
   - Light Layer 5
   - Light Layer 6
   - Light Layer 7
+<<<<<<< HEAD
+=======
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+>>>>>>> 4326a873d027be8e6526b89cc4d75f09529d16ed
